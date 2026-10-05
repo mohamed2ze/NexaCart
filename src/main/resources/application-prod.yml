@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+
+springdoc:
+  api-docs:
+    enabled: ${NEXACART_OPENAPI_ENABLED:false}
+  swagger-ui:
+    enabled: ${NEXACART_OPENAPI_ENABLED:false}
+
+nexacart:
+  payments:
+    simulator-enabled: false
+  seed:
+    enabled: false

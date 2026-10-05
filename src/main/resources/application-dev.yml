@@ -1,0 +1,18 @@
+spring:
+  jpa:
+    properties:
+      hibernate:
+        format_sql: false
+logging:
+  level:
+    com.nexacart: INFO
+    org.hibernate.SQL: WARN
+
+nexacart:
+  payments:
+    simulator-enabled: ${NEXACART_PAYMENT_SIMULATOR_ENABLED:true}
+  rate-limit:
+    enabled: ${NEXACART_RATE_LIMIT_ENABLED:true}
+  seed:
+    enabled: ${NEXACART_SEED_ENABLED:true}
+    customer-password: ${NEXACART_SEED_CUSTOMER_PASSWORD:Customer123!}
