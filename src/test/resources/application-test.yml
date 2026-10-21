@@ -1,0 +1,30 @@
+spring:
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+
+nexacart:
+  security:
+    jwt:
+      secret: bmV4YWNhcnQtdGVzdC1zZWNyZXQtMDEyMzQ1Njc4OWFiY2RlZg==
+      issuer: nexacart-test
+      access-token-ttl-seconds: 900
+  cors:
+    allowed-origins: http://localhost:3000
+  orders:
+    shipping-fee: 5.99
+    free-shipping-threshold: 100.00
+    currency: USD
+  payments:
+    simulator-enabled: true
+  rate-limit:
+    enabled: false
+  seed:
+    enabled: false
