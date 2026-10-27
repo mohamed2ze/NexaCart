@@ -1,12 +1,18 @@
+# Build output
 target/
-!.mvn/wrapper/maven-wrapper.jar
-.mvn/wrapper/maven-wrapper.properties
+*.class
 
+# Packaged artifacts
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# Local environment and secrets
 .env
 .env.local
 *.env
 !.env.example
 
+# IDE and editor configuration
 .idea/
 *.iml
 .vscode/
@@ -15,11 +21,8 @@ target/
 .project
 .factorypath
 
+# Logs and operating-system files
 *.log
 logs/
 .DS_Store
 Thumbs.db
-
-*.class
-*.jar
-!maven-wrapper.jar
