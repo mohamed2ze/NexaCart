@@ -584,4 +584,5 @@ These credentials are explicitly development-only. No administrator is created a
 
 - [Architecture and ER diagram](docs/ARCHITECTURE.md)
 - [Development guide and design decisions](docs/DEVELOPMENT.md)
+- [Six-point engineering handoff](docs/HANDOFF.md)
 - [Postman collection](docs/nexacart.postman_collection.json)
