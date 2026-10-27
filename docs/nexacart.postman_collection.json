@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "NexaCart API",
-    "description": "End-to-end NexaCart collection. Register/login a customer and an admin first. Login scripts store JWTs automatically. Create a category, product, address, and cart item before creating an order.",
+    "description": "Representative end-to-end NexaCart collection. Register/login a customer and an admin first; login scripts store JWTs automatically. Create a category, product, address, and cart item before creating an order. Reviews require an order that an administrator has advanced to DELIVERED. Requests are grouped by area and some flows require prior state; this is not an exhaustive endpoint list.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -94,6 +94,21 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
             "url": "{{baseUrl}}/api/v1/users/me"
+          }
+        },
+        {
+          "name": "Update customer profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{customerToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/api/v1/users/me",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Maya\",\n  \"lastName\": \"Hassan\"\n}"
+            }
           }
         },
         {
@@ -324,6 +339,7 @@
           "name": "Initiate simulated payment",
           "request": {
             "method": "POST",
+            "description": "Requires the dev/test payment simulator. The order must be PENDING. Returns the existing pending payment if one already exists.",
             "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
             "url": "{{baseUrl}}/api/v1/orders/{{orderId}}/payments"
           },
@@ -343,6 +359,7 @@
           "name": "Simulate payment success",
           "request": {
             "method": "POST",
+            "description": "Requires the simulator. SUCCESS confirms a PENDING order. Repeating the same terminal outcome is idempotent.",
             "header": [
               { "key": "Authorization", "value": "Bearer {{customerToken}}" },
               { "key": "Content-Type", "value": "application/json" }
@@ -360,9 +377,18 @@
           }
         },
         {
+          "name": "Get payment",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "url": "{{baseUrl}}/api/v1/payments/{{paymentId}}"
+          }
+        },
+        {
           "name": "Cancel order",
           "request": {
             "method": "POST",
+            "description": "Only PENDING and CONFIRMED orders can be cancelled. If you run the administrator fulfillment requests first, cancellation is rejected; use a new order to exercise this request.",
             "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
             "url": "{{baseUrl}}/api/v1/orders/{{orderId}}/cancel"
           }
@@ -383,6 +409,7 @@
           "name": "Create review (delivered purchase required)",
           "request": {
             "method": "POST",
+            "description": "Requires a DELIVERED order containing this product. Use the admin status requests to advance the order to DELIVERED first.",
             "header": [
               { "key": "Authorization", "value": "Bearer {{customerToken}}" },
               { "key": "Content-Type", "value": "application/json" }
@@ -449,15 +476,66 @@
           }
         },
         {
+          "name": "Admin: get order",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/api/v1/admin/orders/{{orderId}}"
+          }
+        },
+        {
+          "name": "Admin: order payments",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/api/v1/admin/orders/{{orderId}}/payments"
+          }
+        },
+        {
           "name": "Advance order to PROCESSING",
           "request": {
             "method": "PATCH",
+            "description": "Requires a CONFIRMED order, for example after Simulate payment success. Do not run Cancel order first.",
             "header": [
               { "key": "Authorization", "value": "Bearer {{adminToken}}" },
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": "{{baseUrl}}/api/v1/admin/orders/{{orderId}}/status",
             "body": { "mode": "raw", "raw": "{\n  \"status\": \"PROCESSING\"\n}" }
+          }
+        },
+        {
+          "name": "Advance order to SHIPPED",
+          "request": {
+            "method": "PATCH",
+            "description": "Requires a PROCESSING order.",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/orders/{{orderId}}/status",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"SHIPPED\"\n}" }
+          }
+        },
+        {
+          "name": "Advance order to DELIVERED",
+          "request": {
+            "method": "PATCH",
+            "description": "Requires a SHIPPED order. After this, the customer can create a verified-purchase review.",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/orders/{{orderId}}/status",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"DELIVERED\"\n}" }
+          }
+        },
+        {
+          "name": "Get inventory",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/api/v1/admin/inventory/{{productId}}"
           }
         },
         {
