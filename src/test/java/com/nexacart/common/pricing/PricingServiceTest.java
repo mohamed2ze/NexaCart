@@ -1,6 +1,5 @@
-package com.nexacart.common;
+package com.nexacart.common.pricing;
 
-import com.nexacart.common.pricing.PricingService;
 import com.nexacart.config.NexaCartProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

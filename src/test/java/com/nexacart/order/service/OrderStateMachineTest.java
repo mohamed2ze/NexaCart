@@ -1,8 +1,7 @@
-package com.nexacart.common;
+package com.nexacart.order.service;
 
 import com.nexacart.common.exception.ApiException;
 import com.nexacart.order.entity.OrderStatus;
-import com.nexacart.order.service.OrderStateMachine;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
