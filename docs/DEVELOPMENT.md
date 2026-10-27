@@ -219,7 +219,7 @@ SELECT order_id, status, provider_reference FROM payments;
 mvn clean verify
 ```
 
-Expected: **59 tests passing**, Flyway migration applied to a fresh PostgreSQL Testcontainer, Spring context starts with schema validation, and a runnable Boot JAR is produced at `target/nexacart-1.0.0.jar`.
+Expected: the full unit and integration suite passes, Flyway migrations apply to a fresh PostgreSQL Testcontainer, the Spring context starts with schema validation, and a runnable Boot JAR is produced at `target/nexacart-1.0.0.jar`.
 
 The same command runs in CI with JDK 21, followed by a container-image build. CI is defined in `.github/workflows/ci.yml`.
 

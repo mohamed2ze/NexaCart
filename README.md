@@ -90,7 +90,7 @@ mvn test          # unit + integration tests
 mvn clean verify  # tests, schema validation, and packaged JAR
 ```
 
-The current suite has 59 tests. There is intentionally no H2 fallback: integration tests must exercise real PostgreSQL locking, partial indexes, and constraints. CI runs `mvn clean verify` and a container-image build on every push to `main` and every pull request.
+The suite includes unit tests and PostgreSQL Testcontainers integration tests. There is intentionally no H2 fallback: integration tests must exercise real PostgreSQL locking, partial indexes, and constraints. CI runs `mvn clean verify` and a container-image build on every push to `main` and every pull request.
 
 ## Documentation
 
