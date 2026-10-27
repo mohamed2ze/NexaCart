@@ -1,6 +1,6 @@
 # NexaCart Development Guide
 
-This is the contribution guide for humans and AI agents: local workflow, conventions, migrations, tests, and common pitfalls. For layout and ownership, see [Project structure](PROJECT_STRUCTURE.md). For runtime configuration and profiles, see [Configuration and operations](OPERATIONS.md). For system design, see [Architecture](ARCHITECTURE.md).
+This is the contribution guide for humans and AI agents: local workflow, conventions, migrations, tests, and common pitfalls. For layout and ownership, see [Project structure](PROJECT_STRUCTURE.md). For runtime configuration and profiles, see [Configuration and operations](OPERATIONS.md). For system design, see [Architecture](ARCHITECTURE.md). For failure diagnosis, see [Troubleshooting](TROUBLESHOOTING.md).
 
 ## 1. Local workflow
 
@@ -141,6 +141,15 @@ Existing transaction types:
 - For concurrency, call services from multiple threads with a `CountDownLatch`. Use separate transactions; do not annotate the test with `@Transactional`.
 - Testcontainers requires a running Docker daemon. There is intentionally no H2 fallback.
 
+Run a focused test class or method when iterating:
+
+```bash
+mvn -Dtest=AuthIntegrationTest test
+mvn -Dtest=OrderIntegrationTest#cancellationRestoresStockExactlyOnce test
+```
+
+Integration tests still need Docker. Use `mvn clean verify` for the full pre-commit check.
+
 Test layout:
 
 ```
@@ -207,6 +216,7 @@ SELECT order_id, status, provider_reference FROM payments;
 - **Editing an applied Flyway migration:** causes checksum validation failure. Add a new migration instead.
 - **Comparing `BigDecimal` with `equals`:** use `compareTo` for monetary comparisons.
 - **Loading stock before locking:** can trigger Hibernate conflicting-version errors and stale validation.
+- **Assuming open-in-view:** `spring.jpa.open-in-view` is `false`. Access lazy associations inside the service transaction or fetch them explicitly; do not serialize entities.
 - **Using unsigned logic for stock:** reject negative results before saving; the DB check is a backstop.
 - **Forgetting to restore stock on cancellation:** always add an `ORDER_RESTOCK` ledger row and test the count.
 - **Returning entities from controllers:** creates lazy-loading and data-exposure problems. Map to response records.
@@ -226,7 +236,19 @@ The same command runs in CI with JDK 21, followed by a container-image build. CI
 Docker verification:
 
 ```bash
+cp .env.example .env
+sed -i "s|^NEXACART_JWT_SECRET=.*|NEXACART_JWT_SECRET=$(openssl rand -base64 48)|" .env
 docker compose build
 docker compose up -d
 curl http://localhost:8080/actuator/health
 ```
+
+Configure the JWT secret first; without it the app container exits. See [Troubleshooting](TROUBLESHOOTING.md#startup-and-configuration) for unhealthy containers and port conflicts.
+
+## 13. Documentation changes
+
+- Update [API.md](API.md) when endpoints, payloads, status codes, or validation rules change.
+- Update [nexacart.postman_collection.json](nexacart.postman_collection.json) for changed or new requests. The collection covers the main flows and is not an exhaustive endpoint list.
+- Update [ARCHITECTURE.md](ARCHITECTURE.md), [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md), or [OPERATIONS.md](OPERATIONS.md) when boundaries, layout, or runtime configuration change.
+- Update [docs/README.md](README.md) when adding, renaming, or removing a document.
+- Use relative links for repository files and verify anchors. Run `git diff --check` before committing to catch whitespace errors.
