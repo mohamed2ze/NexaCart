@@ -29,9 +29,9 @@ The project is deliberately a **modular monolith**. It is easy to run locally, b
 | Testcontainers | 2.0.5 |
 | JUnit / Mockito | JUnit 6.0.x / Mockito 5.23.x |
 | Lombok | 1.18.48 (entities/configuration only) |
-| Docker / Compose | Docker 29.x / Compose v5.x |
+| Docker / Compose | Docker Engine with Compose v2+; local verification used Docker 29.x / Compose v5.x |
 
-Versions are managed by the Spring Boot 4.1.2 BOM except springdoc-openapi, which is pinned in `pom.xml`.
+Versions are managed by the Spring Boot 4.1.2 BOM except springdoc-openapi, which is pinned in `pom.xml`. Maven dependency versions in this table were verified with `mvn dependency:list`.
 
 ## Prerequisites
 
@@ -63,7 +63,7 @@ export NEXACART_SEED_CUSTOMER_PASSWORD="Customer123!"
 SPRING_PROFILES_ACTIVE=dev mvn spring-boot:run
 ```
 
-The `dev` profile enables the payment simulator and idempotent sample data. The application refuses to start without a valid `NEXACART_JWT_SECRET` (Base64, at least 32 decoded bytes).
+The `dev` profile enables the payment simulator and idempotent sample data. The application refuses to start without a valid `NEXACART_JWT_SECRET` (Base64, at least 32 decoded bytes). If startup or container health fails, see [Troubleshooting](docs/TROUBLESHOOTING.md).
 
 ### Seeded development accounts
 
@@ -101,6 +101,7 @@ Start at the [documentation index](docs/README.md).
 - [Development guide](docs/DEVELOPMENT.md) — local workflow, conventions, testing, migrations, and common pitfalls.
 - [API guide](docs/API.md) — authentication, endpoint overview, HTTP semantics, and request examples.
 - [Configuration and operations](docs/OPERATIONS.md) — environment variables, profiles, database setup, deployment, security posture, and limitations.
+- [Troubleshooting](docs/TROUBLESHOOTING.md) — symptom-based fixes for startup, database, tests, auth, and payments.
 - [Engineering handoff](docs/HANDOFF.md) — point-in-time delivery and verification snapshot.
 - [Postman collection](docs/nexacart.postman_collection.json) — executable API requests.
 
