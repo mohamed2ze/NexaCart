@@ -1,11 +1,13 @@
 # NexaCart Development Guide
 
+This is the contribution guide for humans and AI agents: local workflow, conventions, migrations, tests, and common pitfalls. For layout and ownership, see [Project structure](PROJECT_STRUCTURE.md). For runtime configuration and profiles, see [Configuration and operations](OPERATIONS.md). For system design, see [Architecture](ARCHITECTURE.md).
+
 ## 1. Local workflow
 
 ```bash
 docker compose up -d postgres
 export NEXACART_JWT_SECRET="$(openssl rand -base64 48)"
-export NEXACART_ADMIN_PASSWORD="AdminDevPass123!"
+export NEXACART_ADMIN_PASSWORD="ChangeMe_Admin_Dev_123!"
 export NEXACART_SEED_CUSTOMER_PASSWORD="Customer123!"
 SPRING_PROFILES_ACTIVE=dev mvn spring-boot:run
 ```
@@ -33,14 +35,7 @@ Useful URLs:
 
 ## 2. Profiles
 
-| Profile | Purpose |
-|---|---|
-| default | No dev seeding, no payment simulator, production-like safe defaults. JWT secret still required. |
-| `dev` | Enables idempotent sample data and the payment simulator. Used by Compose. |
-| `test` | Test-only JWT secret and fee configuration; used with Testcontainers. Rate limiting disabled so test flows are deterministic. |
-| `prod` / `production` | Disables seeding, disables the simulator, disables OpenAPI by default. |
-
-`application-prod.yml` exists for deployment defaults. Set a real `NEXACART_JWT_SECRET`, database credentials, CORS origins, and `NEXACART_OPENAPI_ENABLED=false` unless API docs are intentionally exposed.
+Profile behavior and environment variables are documented in [Configuration and operations](OPERATIONS.md#profiles). Use the `dev` profile for seeded data and the payment simulator, and the `test` profile for integration tests. Do not enable the simulator or seeding in a production profile.
 
 ## 3. Adding a feature
 
@@ -65,7 +60,9 @@ Recommended checklist:
 6. Add a `@PreAuthorize` check for administrative operations in addition to URL rules.
 7. Return proper HTTP status codes; use `ApiException` for business failures.
 8. Add tests for both success and failure paths, including cross-customer access.
-9. Update the README/OpenAPI if the public contract changes.
+9. Update the API contract documentation in `docs/API.md` and the Postman collection when endpoints or payloads change.
+10. Update `docs/ARCHITECTURE.md`, `docs/OPERATIONS.md`, or `docs/PROJECT_STRUCTURE.md` if the change affects boundaries, configuration, or layout.
+11. Update `docs/README.md` if you add or rename a documentation file.
 
 ### Naming conventions
 
@@ -152,14 +149,16 @@ src/test/java/com/nexacart/
 ├── product/ProductCatalogIntegrationTest.java
 ├── cart/CartAndAddressIntegrationTest.java
 ├── order/OrderIntegrationTest.java
+├── order/service/OrderStateMachineTest.java
 ├── payment/PaymentIntegrationTest.java
 ├── review/ReviewIntegrationTest.java
 ├── inventory/InventoryIntegrationTest.java
-├── security/AuthRateLimitFilterTest.java
-├── common/PricingServiceTest.java
-├── common/OrderStateMachineTest.java
+├── security/AuthRateLimitFilterTest.java, SecurityIntegrationTest.java
+├── common/pricing/PricingServiceTest.java
 └── support/IntegrationTestBase.java, ApplicationContextIntegrationTest.java
 ```
+
+Unit tests live in the package of the class under test; integration tests live in their domain package and extend `IntegrationTestBase`.
 
 ## 8. Database development
 
@@ -221,6 +220,8 @@ mvn clean verify
 ```
 
 Expected: **59 tests passing**, Flyway migration applied to a fresh PostgreSQL Testcontainer, Spring context starts with schema validation, and a runnable Boot JAR is produced at `target/nexacart-1.0.0.jar`.
+
+The same command runs in CI with JDK 21, followed by a container-image build. CI is defined in `.github/workflows/ci.yml`.
 
 Docker verification:
 

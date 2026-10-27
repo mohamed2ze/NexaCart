@@ -1,5 +1,7 @@
 # NexaCart Architecture
 
+Related documents: [Project structure](PROJECT_STRUCTURE.md) for package ownership and extension points, [Development guide](DEVELOPMENT.md) for conventions and tests, and [Configuration and operations](OPERATIONS.md) for runtime settings.
+
 ## 1. Architectural style
 
 NexaCart is a **modular monolith**. Each business domain owns its HTTP contract, DTOs, service logic, entities, and repositories. Domains collaborate through explicit service/repository calls inside one process and one PostgreSQL database. There are no microservices, message brokers, or distributed transactions.
@@ -39,6 +41,8 @@ flowchart LR
 | `config` | Properties, security wiring, OpenAPI, dev seeding | all |
 
 Controllers do not contain business rules. Services define transaction boundaries. Repositories only access data. JPA entities are never serialized; separate request/response records define the API contract.
+
+The physical layout follows this model directly: each domain package owns `controller`, `dto`, `entity`, `repository`, and `service` subpackages, while `common`, `config`, and `security` hold cross-cutting code. See [Project structure](PROJECT_STRUCTURE.md) for the directory map and the rules for adding code.
 
 ## 2. Request lifecycle
 
@@ -365,6 +369,7 @@ For a real provider, add signature-verified webhooks, provider event IDs with a 
   - two customers competing for the last unit produce one winner and one conflict.
 - **Failure-path tests:** unauthorized/forbidden, ownership violations, disabled accounts, invalid transitions, negative stock, missing headers, empty carts, duplicate payments.
 - **No mocks for the database layer** in integration tests. This is intentional: the highest-risk behavior is transactional and database-specific.
+- **Test placement:** unit tests live in the package of the class under test; integration tests live in their domain package and extend `IntegrationTestBase`. See [DEVELOPMENT.md](DEVELOPMENT.md#7-testing-guide).
 
 ## 9. Important trade-offs
 
