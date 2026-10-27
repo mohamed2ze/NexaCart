@@ -86,6 +86,8 @@ public class PaymentService {
         Payment preview = paymentRepository.findByIdWithOrder(paymentId)
                 .orElseThrow(() -> ApiException.notFound("PAYMENT_NOT_FOUND", "Payment not found"));
         UUID orderId = preview.getOrder().getId();
+        // Match cancellation's lock order (order first, then payment) so completion
+        // and refunds cannot interleave.
         Order order = orderRepository.findByIdForUpdate(orderId)
                 .orElseThrow(() -> ApiException.notFound("ORDER_NOT_FOUND", "Order not found"));
         if (!order.getUser().getId().equals(userId)) {

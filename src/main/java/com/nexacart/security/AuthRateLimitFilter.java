@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AuthRateLimitFilter extends OncePerRequestFilter {
 
     private final NexaCartProperties properties;
+    // Per-JVM state: a multi-instance deployment needs shared storage or a gateway limiter.
     private final Map<String, Window> windows = new ConcurrentHashMap<>();
 
     public AuthRateLimitFilter(NexaCartProperties properties) {

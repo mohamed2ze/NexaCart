@@ -16,6 +16,8 @@ public interface CartItemRepository extends JpaRepository<CartItem, UUID> {
     @EntityGraph(attributePaths = {"product", "product.category", "product.inventory"})
     List<CartItem> findByCartIdOrderByCreatedAtAsc(UUID cartId);
 
+    // Checkout deliberately loads only cart items here. Inventory rows are locked and
+    // read afterwards so Hibernate never holds stale inventory versions from this read.
     @Query("""
             select i from CartItem i
             where i.cart.id = :cartId

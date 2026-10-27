@@ -105,6 +105,8 @@ public class OrderService {
         if (existing.isPresent()) {
             return OrderResponse.from(existing.get());
         }
+        // The explicit transaction lets a unique-key race be resolved after rollback:
+        // the losing request reads the order committed by the winning request.
         try {
             return transactionTemplate.execute(status -> createOrderInTransaction(userId, key, request));
         } catch (DataIntegrityViolationException ex) {
