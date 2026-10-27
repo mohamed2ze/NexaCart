@@ -14,6 +14,7 @@ NexaCart/
 │   ├── DEVELOPMENT.md             Contribution and testing guide
 │   ├── API.md                     HTTP contract and examples
 │   ├── OPERATIONS.md              Configuration, deployment, and limitations
+│   ├── TROUBLESHOOTING.md         Symptom-based diagnosis and recovery
 │   ├── HANDOFF.md                 Point-in-time delivery record
 │   └── nexacart.postman_collection.json
 ├── src/
@@ -102,10 +103,11 @@ Each domain package follows the same layer structure:
 | `docs/README.md` | Documentation index and source-of-truth map. |
 | `docs/ARCHITECTURE.md` | Component boundaries, data model, request lifecycle, transactions, security, and trade-offs. |
 | `docs/DEVELOPMENT.md` | Local workflow, feature checklist, conventions, testing, and pitfalls. |
-| `docs/API.md` | Authentication, endpoint table, status semantics, errors, and examples. |
-| `docs/OPERATIONS.md` | Environment variables, profiles, database operations, deployment, and limitations. |
+| `docs/API.md` | Authentication, endpoint reference, status semantics, error codes, and examples. |
+| `docs/OPERATIONS.md` | Environment variables, profiles, database operations, logging, deployment, and limitations. |
+| `docs/TROUBLESHOOTING.md` | Symptom-based diagnosis for startup, database, tests, auth, inventory, and payments. |
 | `docs/HANDOFF.md` | Historical delivery/verification snapshot. Not canonical guidance. |
-| `docs/nexacart.postman_collection.json` | Manually maintained executable API requests. |
+| `docs/nexacart.postman_collection.json` | Manually maintained collection covering the main API flows. |
 | `.github/workflows/ci.yml` | CI: `mvn clean verify` plus a container-image build. |
 | `compose.yaml` | Local PostgreSQL and application stack. |
 | `Dockerfile` | Multi-stage Java 21 build and runtime image. |

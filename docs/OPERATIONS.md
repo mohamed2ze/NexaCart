@@ -1,6 +1,6 @@
 # Configuration and Operations
 
-This document covers runtime configuration, profiles, local operations, deployment expectations, and known limitations. For build/test conventions, see [DEVELOPMENT.md](DEVELOPMENT.md).
+This document covers runtime configuration, profiles, local operations, deployment expectations, and known limitations. For build/test conventions, see [DEVELOPMENT.md](DEVELOPMENT.md). For symptom-based fixes, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 ## Profiles
 
@@ -22,8 +22,11 @@ cp .env.example .env
 sed -i "s|^NEXACART_JWT_SECRET=.*|NEXACART_JWT_SECRET=$(openssl rand -base64 48)|" .env
 ```
 
+The app refuses to start if `NEXACART_JWT_SECRET` is missing, is not valid Base64, or decodes to fewer than 32 bytes. Compose does not provide an insecure fallback.
+
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
+| `SPRING_PROFILES_ACTIVE` | No | none | Selects a Spring profile (`dev`, `test`, `prod`/`production`). Compose sets `dev`. |
 | `NEXACART_JWT_SECRET` | Yes | none | Base64-encoded HMAC key, at least 32 decoded bytes. Generate with `openssl rand -base64 48`. |
 | `NEXACART_JWT_ISSUER` | No | `nexacart` | JWT issuer and issuer validation. |
 | `NEXACART_JWT_TTL_SECONDS` | No | `900` | Access-token lifetime in seconds. |
@@ -47,7 +50,11 @@ sed -i "s|^NEXACART_JWT_SECRET=.*|NEXACART_JWT_SECRET=$(openssl rand -base64 48)
 | `NEXACART_OPENAPI_ENABLED` | No | `false` in `prod` | Enables Swagger/OpenAPI in the production profile. |
 | `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `DB_PORT`, `APP_PORT` | Compose only | dev values | Compose database and port configuration. |
 
-The application refuses to start without a valid JWT secret. Compose forwards the JWT issuer, TTL, CORS, order, payment, rate-limit, and seed settings shown in `.env.example`.
+The application refuses to start without a valid JWT secret. Compose forwards the JWT issuer, TTL, CORS, order, payment, rate-limit, and seed settings shown in `.env.example` and `compose.yaml`.
+
+Compose does not forward every variable in this table. In particular, `DB_POOL_SIZE` and `NEXACART_OPENAPI_ENABLED` are not in the `app` service environment; add them to `compose.yaml` if they must be set for the container. The app container always listens on port `8080`; `APP_PORT` only changes the host-side mapping. Use `SERVER_PORT` when running the JAR directly.
+
+For frontend integration, CORS allows only the configured origins, the methods `GET`/`POST`/`PUT`/`PATCH`/`DELETE`/`OPTIONS`, the headers `Authorization`, `Content-Type`, and `Idempotency-Key`, and exposes `Location`. Credentials are disabled. See the [API guide](API.md#cors-and-rate-limiting).
 
 ## Database setup and migrations
 
@@ -136,10 +143,19 @@ When running:
 
 Use the **Authorize** button in Swagger UI with a token from the login endpoint. In `prod`/`production`, OpenAPI is disabled by default and can only be enabled explicitly with `NEXACART_OPENAPI_ENABLED=true`.
 
+## Logging, health, and shutdown
+
+- The application uses graceful shutdown with a 20-second shutdown phase timeout.
+- Actuator exposes `health` and `info`. Only `health` is public; health details are hidden and `info` requires authentication.
+- The Compose health check calls `GET /actuator/health` and waits for `"status":"UP"`.
+- SQL logging is set to `WARN` by the `dev` profile. Raise it temporarily with `LOGGING_LEVEL_ORG_HIBERNATE_SQL=DEBUG` (or `--logging.level.org.hibernate.SQL=DEBUG`) when diagnosing queries. Do not log request bodies containing passwords or `Authorization` headers.
+- Logs do not include passwords or bearer tokens. Application errors are handled centrally, and `500` responses do not include stack traces.
+
 ## Payment simulation limitations
 
 - `SimulatedPaymentProvider` is **not a real payment processor**. A simulated success is only a local state transition; no money moves and no card data is accepted or stored.
-- The simulator is enabled by the `dev` profile and blocked when `prod`/`production` is active, regardless of `NEXACART_PAYMENT_SIMULATOR_ENABLED`.
+- The simulator is enabled by the `dev` profile or by setting `NEXACART_PAYMENT_SIMULATOR_ENABLED=true` outside `prod`/`production`. It is always blocked in `prod`/`production`, regardless of that setting.
+- Both payment initiation (`POST /api/v1/orders/{orderId}/payments`) and simulation (`POST /api/v1/payments/{id}/simulate`) require an enabled provider and return `503 PAYMENT_PROVIDER_UNAVAILABLE` otherwise. Reading existing payment records is not gated.
 - There is no raw card-number or CVV storage anywhere in the schema or API.
 - Duplicate completion notifications are safe because the payment row is locked, terminal states are checked, provider references are unique, and only one pending payment per order is allowed.
 - Refunds are synchronous in the simulator. A real provider may require asynchronous callbacks, signatures, and reconciliation.
@@ -155,6 +171,8 @@ Use the **Authorize** button in Swagger UI with a token from the login endpoint.
 - CORS uses an explicit origin list and allows only the headers required by the API.
 - Method and URL authorization protect administrative endpoints.
 - Ownership checks protect cart, addresses, orders, payments, and reviews. Cross-customer access returns 404 to avoid resource enumeration.
+- Review eligibility requires a delivered purchase and one review per customer/product; ownership-protected updates/deletes return 404.
+- Administrators cannot demote or disable their own account, and the last enabled administrator cannot be removed.
 - DTOs prevent mass assignment; public registration cannot assign a role; requests never contain trusted prices or totals.
 - Bean Validation covers request bodies; database constraints enforce critical invariants.
 - JPA parameter binding and specification predicates avoid string-concatenated SQL.
@@ -185,8 +203,9 @@ Use the **Authorize** button in Swagger UI with a token from the login endpoint.
 - No real payment-provider integration.
 - No admin review moderation.
 - Shipping fee and free-shipping threshold are global configuration, not per-region rules.
-- Search is SQL `LIKE` over indexed trigram expressions rather than a dedicated search engine.
+- Search is SQL `LIKE` over trigram-indexed `lower(name)`/`lower(description)` expressions plus an unindexed SKU match, rather than a dedicated search engine.
 - Rate limiting and other in-memory state do not coordinate across instances.
+- There is no automated backup, restore, or migration-rollback procedure. Flyway migrations are forward-only; use PostgreSQL tooling and a new migration to correct schema mistakes.
 
 ## Potential future improvements
 
